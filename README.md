@@ -17,7 +17,7 @@ The input would be a .wav file inputted by the use. There are few pre-conditions
 
 The output will be a displayed tablature in the GUI. The use will have the option to listen to the chord to check for its accuracy. They also have options to edit the tablatures being made with different audio proccessing tools, and the GUI will in real time reflect changes.
 
-Methodology:
+Methodology:\n
 First, the .wav file will be proccessed in from the web through some input. Then the file will go through a FFT and be seperated into more fundemental components. Then, machine learning algorithms will be used to interpret which notes are being played and will compile these individual notes. Then another elgorithm will determine the placement of these notes on the fretboard of a guitar. This data will be sent from the backend back to the frontend, and the front end will interpret this data and display it on a GUI.
 
 Considerations in Methodology:
@@ -26,6 +26,10 @@ Considerations in Methodology:
 - (look into differences between Constant Q-transform and Variable Q-transform)
 - The Q-transform may eliminate need for machine learning or reduce it to a method of filtering noise out. This may not even need to be implemented directly
   and likely exists is some other algorithm already released as a open source library
+- Consider using open source C++ implementation of chord-detector
+- Consider evaluating the efficiency and accuracy of a Machine-Learning setup vs FFT/DFT setup vs a CQT setup
+- Consider the use of auto-correlation setup.
+- Test all setups against each other for accuracy
 
 Other possible features include:
 
