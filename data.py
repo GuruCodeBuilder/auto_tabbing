@@ -1,6 +1,6 @@
 import os
+import threading
 
-# import sys
 import wave
 import pickle
 
@@ -10,8 +10,13 @@ import pandas as pd
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-# constants for a quick config
-GRAPH = True
+from cqt_trim_enum import CQTTrimMethod, trim_CQT
+
+# constants for quick config
+GRAPH = False  # set to True to display the CQT graphs
+CQT_TRIM_METHOD = (
+    CQTTrimMethod.THRESHOLD
+)  # set to trim_CQT_thresh to trim by threshold instead of time slice
 
 labels = None
 cqt_data = (
@@ -43,15 +48,6 @@ def cqt_func(audio_data, frame_rate):
         )
     )  #  n_bins=480, bins_per_octave=96
     return cqt_data
-
-
-def trim_CQT(cqt_data):
-    """Genreate a trimmed version of the CQT data to a fixed size for a faster and more consistent model
-
-    Args:
-        cqt_data (list): List of lists of integers containing frequencies and their time durations
-    """
-    # TODO: Implement a function that trims the CQT data to a fixed size
 
 
 def plot_cqt_data(cqtd, sample_rate, label, ind):
@@ -88,10 +84,8 @@ def plot_cqt_data(cqtd, sample_rate, label, ind):
 if not os.path.exists("./cqt_graphs"):
     os.mkdir("./cqt_graphs")
 
-# checks if the pickled data file has been created or not and considers the case ig not created
-if not os.path.exists("./pickled_data/data.pkl") or not os.path.exists(
-    "./pickled_data/labels.pkl"
-):
+# checks if the pickled data file has been created or not and considers the case it not created
+if not os.path.exists("./pickled_data/data.pkl"):
     if not os.path.exists("./pickled_data"):
         os.mkdir("./pickled_data")  # If the dir does not exist, create it
     labels = [
@@ -110,7 +104,9 @@ if not os.path.exists("./pickled_data/data.pkl") or not os.path.exists(
             if i.is_file() and i.name.endswith(".wav")
         ]
         # Instantiates lists to group together CQT data from audio files under the same note
-        _cqt_data = []
+        _cqt_data_labels = []
+        _cqt_data_trimmed = []
+        _cqt_data_full = []
         # creates the file path directory for the respective note described by "label" in the cqt graphs dir
         label_fp = f"./cqt_graphs/{label}"  # fp - file path
         if not os.path.exists(label_fp):
@@ -124,27 +120,29 @@ if not os.path.exists("./pickled_data/data.pkl") or not os.path.exists(
             cqt_datum = cqt_func(wdf, sr)
             plot_cqt_data(
                 cqt_datum, sr, label, ind + 1
-            )  # make plots of cqt data for each wav file
-            trimmed_data = trim_CQT(cqt_datum)
-            _cqt_data.append(
-                {
-                    "labrel": label,
-                    "cqt_data_trimmed": trimmed_data,
-                    "cqt_data_full": cqt_datum,
-                }
-            )  # same logic as above but with cqt data for wav files under the note descfibed by "label"
+            )  # plot the cqt data for the wav file under the note described by "label"
+
+            trimmed_data = trim_CQT(CQTTrimMethod, cqt_datum)  # trim data
+
+            # update columns
+            _cqt_data_full.append(cqt_datum)
+            _cqt_data_trimmed.append(trimmed_data)
+            _cqt_data_labels.append(label)
         # append data for cqt for the label to the overall lists representing all the cqt data repectively
-        cqt_data.append(_cqt_data)
+        new = pd.DataFrame(
+            {
+                "LABEL": _cqt_data_labels,
+                "CQT_DATA_TRIMMED": _cqt_data_trimmed,
+                "CQT_DATA_FULL": _cqt_data_full,
+            }
+        )
+        cqt_data = pd.concat([cqt_data, new], ignore_index=True)
     # upload data locally into pickled binary files to be loaded in for later use
-    with open("./pickled_data/data.pkl", "wb") as f:
-        pickle.dump(cqt_data, f)
-    with open("./pickled_data/labels.pkl", "wb") as f:
-        pickle.dump(labels, f)
+    cqt_data.to_pickle("./pickled_data/data.pkl")
 else:
-    with open("./pickled_data/data.pkl", "wb") as f:
-        cqt_data = pickle.load(f)
-    with open("./pickled_data/labels.pkl", "wb") as f:
-        labels = pickle.load(f)
+    # read already created cqt data
+    cqt_data = pd.read_pickle("./pickled_data/data.pkl")
 
 if __name__ == "__main__":
-    pass
+    # print the cqt head
+    print(cqt_data.head())
