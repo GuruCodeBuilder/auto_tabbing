@@ -2,9 +2,10 @@ import os
 
 from stable_baselines3 import DQN
 from train import GuitarEnv
+from data import read_wav, labels, trim_CQT, cqt_func
 
 env = GuitarEnv()
-model = DQN.load("guitar_dqn")
+model = DQN.load("dqn_guitar")
 
 obs = env.reset()
 
@@ -22,9 +23,12 @@ while True:
     env.render()
 """
 
-if os.path.exists(path) and path.endswith(".wav"):
-    obs = # TODO: read the .wav file and convert it to a CQT graph, then trim it
-    # TODO: predict!
+if os.path.exists(path) and path.endswith(".wav") and os.path.isfile(path):
+    wav_data, wdf, wr, sr = read_wav(path)
+    cqt_datum = cqt_func(wdf, sr)
+    trimmed_data = trim_CQT(cqt_datum)
+    action, _states = model.predict(trimmed_data)
+    print(labels[action])
 else:
     print("Invalid path.")
     exit()
