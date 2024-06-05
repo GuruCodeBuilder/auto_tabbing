@@ -1,13 +1,10 @@
-import threading
-
 import gymnasium as gym
 import numpy as np
 
 from stable_baselines3 import DQN
 from stable_baselines3.dqn import MlpPolicy
-from librosa.feature import mfcc
 
-from data import cqt_data, split_training_valid, labels, TOP_N_FREQ
+from data import cqt_data, split_training_valid, labels
 
 training_data, validation_data = split_training_valid(cqt_data)
 
@@ -52,7 +49,7 @@ class GuitarEnv(gym.Env):
         )  # check if we've reached the end of the data
 
         info = {}  # placeholder for additional information. For now, it's empty
-        
+
         if done:
             return None, reward, done, False, info
 
