@@ -1,8 +1,5 @@
 import os
-import threading
-
 import wave
-import pickle
 
 import librosa as lbr
 import numpy as np
@@ -10,13 +7,11 @@ import pandas as pd
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-from cqt_trim_enum import CQTTrimMethod, trim_CQT
+from cqt_trim import trim_CQT
 
 # constants for quick config
 GRAPH = False  # set to True to display the CQT graphs
-CQT_TRIM_METHOD = (
-    CQTTrimMethod.THRESHOLD
-)  # set to trim_CQT_thresh to trim by threshold instead of time slice
+TOP_N_FREQ = 5  # number of top frequencies to be returned by the trim_CQT function
 
 labels = None
 cqt_data = (
@@ -80,6 +75,53 @@ def plot_cqt_data(cqtd, sample_rate, label, ind):
             plt.savefig(plot_file_name)
 
 
+def split_training_valid(
+    data: pd.DataFrame,
+    training_size: float | None | int = None,
+    verbose: bool = False,
+):
+    """Splits the data into training and validation data.
+
+    Args:
+        data (pd.DataFrame): The data to split.
+        training_size (float | None | int, optional): If this number is an int, we take that much training data for each label. The rest goes to validation. If this is a float, then allocate that percent of each label for training data and rest for validation. If the value is None, then use the smallest label value as training_size. rest goes to validation. Defaults to None.
+        verbose (bool, optional): If True, print out useful stuff. Defaults to False.
+    Returns:
+        pd.DataFrame, pd.DataFrame: The training and validation data respectively.
+    """
+    training_data_list = []
+    validation_data_list = []
+
+    def _print(*args, **kwargs):
+        if verbose:
+            print(*args, **kwargs)
+
+    if training_size is None:
+        training_size = data["LABEL"].value_counts().min()  # smallest label value
+        _print(
+            f"Training size not specified. Using smallest label value: {training_size}"
+        )
+    elif isinstance(training_size, float):
+        _print(f"Training size is a float: {training_size}")
+        pass
+    else:
+        _print(f"Training size is an int: {training_size}")
+
+    # Split the data into training and validation data based on the training_size
+    for label in tqdm(data["LABEL"].unique(), desc="Splitting data"):
+        label_data = data[data["LABEL"] == label]
+        if isinstance(training_size, float):
+            training_data_list.append(label_data.sample(frac=training_size))
+        else:
+            training_data_list.append(label_data[:training_size])
+        validation_data_list.append(label_data[training_size:])
+
+    training_data = pd.concat(training_data_list)
+    validation_data = pd.concat(validation_data_list)
+
+    return training_data, validation_data
+
+
 # create the CQT graphs folder, used y the plot_cqt_data function
 if not os.path.exists("./cqt_graphs"):
     os.mkdir("./cqt_graphs")
@@ -122,7 +164,7 @@ if not os.path.exists("./pickled_data/data.pkl"):
                 cqt_datum, sr, label, ind + 1
             )  # plot the cqt data for the wav file under the note described by "label"
 
-            trimmed_data = trim_CQT(CQTTrimMethod, cqt_datum)  # trim data
+            trimmed_data = trim_CQT(cqt_datum, top=TOP_N_FREQ)  # trim data
 
             # update columns
             _cqt_data_full.append(cqt_datum)
@@ -142,6 +184,7 @@ if not os.path.exists("./pickled_data/data.pkl"):
 else:
     # read already created cqt data
     cqt_data = pd.read_pickle("./pickled_data/data.pkl")
+    labels = cqt_data["LABEL"].unique()
 
 if __name__ == "__main__":
     # print the cqt head
