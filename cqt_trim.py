@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def trim_CQT(cqt_data, top: int = 5) -> np.ndarray:
+def trim_CQT(cqt_data, top: int = 20) -> np.ndarray:
     """Trims CQT data to the top `top` frequencies.
 
     Args:

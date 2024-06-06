@@ -218,9 +218,13 @@ if not os.path.exists("./pickled_data/data.pkl"):
     cqt_data.to_pickle("./pickled_data/data.pkl")
     cqt_data_sum_sorted.to_pickle("./pickled_data/mag_sum_data.pkl")
     # turn above specified data into csv files for readability of data
-    cqt_data.to_csv("./cqt_data_frame.csv", sep="\n", index=False)
-    cqt_data_complex.to_csv("./cqt_complex_data_frame.csv", sep="\n", index=False)
-    cqt_data_sum_sorted.to_csv("./cqt_data_sum_frame.csv", sep="\n", index=False)
+    cqt_data.to_csv("./csv_files/cqt_data_frame.csv", sep="\n", index=False)
+    cqt_data_complex.to_csv(
+        "./csv_files/cqt_complex_data_frame.csv", sep="\n", index=False
+    )
+    cqt_data_sum_sorted.to_csv(
+        "./csv_files/cqt_data_sum_frame.csv", sep="\n", index=False
+    )
 else:
     # read already created cqt data
     cqt_data = pd.read_pickle("./pickled_data/data.pkl")
@@ -236,8 +240,10 @@ else:
 
     labels = cqt_data["LABEL"].unique()
 
-    cqt_data.to_csv("./cqt_data_frame.csv", sep="\n", index=False)
-    cqt_data_sum_sorted.to_csv("./cqt_data_sum_frame.csv", sep="\n", index=False)
+    cqt_data.to_csv("./csv_files/cqt_data_frame.csv", sep="\n", index=False)
+    cqt_data_sum_sorted.to_csv(
+        "./csv_files/cqt_data_sum_frame.csv", sep="\n", index=False
+    )
 
 if __name__ == "__main__":
     # print the cqt head
