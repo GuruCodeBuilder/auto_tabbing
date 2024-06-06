@@ -10,7 +10,7 @@ if not os.path.exists("dqn_guitar.zip"):
     train("dqn_guitar")
 model = DQN.load("dqn_guitar")
 
-file = input("Enter the path to the wav file: ")
+file = input("Enter the relative path to the wav file: ")
 while file != "":
     if os.path.exists(file) and file.endswith(".wav") and os.path.isfile(file):
         cqt_nabs, cqt_datum = cqt_func(*read_wav(file))
