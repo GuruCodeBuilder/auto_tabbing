@@ -4,11 +4,11 @@ import numpy as np
 from stable_baselines3 import DQN
 from stable_baselines3.dqn import MlpPolicy
 
-from data import cqt_data, split_training_valid, labels
+from data import cqt_data, split_training_valid, labels, SAMPLE_RATE_REF
 
 training_data, validation_data = split_training_valid(cqt_data)
 
-SAMPLING_RATE = 12000
+SAMPLING_RATE = SAMPLE_RATE_REF
 IS_USING_FULL_CQT = False
 
 print(training_data.iloc[0]["CQT_DATA_FULL"])
