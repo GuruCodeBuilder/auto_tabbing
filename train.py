@@ -11,7 +11,11 @@ training_data, validation_data = split_training_valid(cqt_data)
 SAMPLING_RATE = SAMPLE_RATE_REF
 IS_USING_FULL_CQT = False
 
-print(training_data.iloc[0]["CQT_DATA_FULL"])
+print(
+    training_data.iloc[0][
+        "CQT_DATA_FULL" if IS_USING_FULL_CQT else "CQT_DATA_MEAN_TRIMMED"
+    ].shape
+)
 
 
 class GuitarEnv(gym.Env):
@@ -67,12 +71,12 @@ class GuitarEnv(gym.Env):
         pass  # no need to implement this method
 
 
-def train():
+def train(name):
     env = GuitarEnv()
     model = DQN(MlpPolicy, env, verbose=1)
     model.learn(total_timesteps=25000)
-    model.save("dqn_guitar")
+    model.save(name)
 
 
 if __name__ == "__main__":
-    train()
+    train("dqn_guitar")

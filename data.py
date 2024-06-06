@@ -11,7 +11,7 @@ from cqt_trim import trim_CQT
 
 # constants for quick config
 GRAPH = False  # set to True to generate the CQT graphs
-TOP_N_FREQ = 5  # number of top frequencies to be returned by the trim_CQT function
+TOP_N_FREQ = 20  # number of top frequencies to be returned by the trim_CQT function
 TRIMMED_EQUIVALENCE = True
 SWITCH = False
 
