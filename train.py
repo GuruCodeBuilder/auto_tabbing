@@ -22,7 +22,7 @@ class GuitarEnv(gym.Env):
             high=1.0,
             shape=(
                 training_data.iloc[0][
-                    "CQT_DATA_FULL" if IS_USING_FULL_CQT else "CQT_DATA_TRIMMED"
+                    "CQT_DATA_FULL" if IS_USING_FULL_CQT else "CQT_DATA_MEAN_TRIMMED"
                 ].shape
             ),
         )
@@ -31,7 +31,7 @@ class GuitarEnv(gym.Env):
 
     def observe(self):
         observation = self.training_data.iloc[self.current_step][
-            "CQT_DATA_FULL" if IS_USING_FULL_CQT else "CQT_DATA_TRIMMED"
+            "CQT_DATA_FULL" if IS_USING_FULL_CQT else "CQT_DATA_MEAN_TRIMMED"
         ]
         return observation
 

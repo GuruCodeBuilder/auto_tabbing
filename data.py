@@ -10,22 +10,30 @@ import matplotlib.pyplot as plt
 from cqt_trim import trim_CQT
 
 # constants for quick config
-GRAPH = False  # set to True to display the CQT graphs
+GRAPH = False  # set to True to generate the CQT graphs
 TOP_N_FREQ = 5  # number of top frequencies to be returned by the trim_CQT function
+TRIMMED_EQUIVALENCE = True
+SWITCH = False
+
+SAMPLE_RATE_REF = 12000
 
 labels = None
 cqt_data = (
     pd.DataFrame()
-)  # data frame to store the cqt data. LABEL, CQT_DATA_TRIMMED, CQT_DATA_FULL
+)  # data frame to store the cqt data. LABEL, CQT_DATA_TRIMMED_MEAN, CQT_DATA_FULL
+cqt_data_complex = (
+    pd.DataFrame()
+)  # data frame to store cqt data as complex form. LABEL, CQT_DATA_COMPLEX
+cqt_data_sum_sorted = (
+    pd.DataFrame()
+)  # data frame to store cqt data with trimmed data sorted by sum. LABEL, CQT_DATA_TRIMMED_SUM, CQT_DATA_FULL
 
 
 def read_wav(file):
     """Read data from the audio files individually, obtaining information on the dat itself and frame/sample rate"""
     with wave.open(file, "r") as f:
-        audio_data = np.frombuffer(f.readframes(f.getnframes()), dtype=np.int16)
         audio_data_float, sample_rate = lbr.load(file)
-        frame_rate = f.getframerate()
-    return audio_data, audio_data_float, frame_rate, sample_rate
+    return audio_data_float, sample_rate
 
 
 def cqt_func(audio_data, frame_rate):
@@ -33,16 +41,17 @@ def cqt_func(audio_data, frame_rate):
     Simulates the CQT (Constant Q Transformation) and returns the data,
     which consists of varying frequencies (in Hz) and their time durations
     """
-    cqt_data = np.abs(
-        lbr.cqt(
-            audio_data,
-            sr=frame_rate,
-            bins_per_octave=48,  # bins_per_octave and n_bins both control resolution of image.
-            fmin=lbr.note_to_hz("A2"),  # sets the lower bound of collected notes
-            n_bins=288,  # for a whole number of octaves to be displayed, must be a multiple of bins_per_octave
-        )
+    cqt_data_no_abs = lbr.cqt(  # This represents the frequencies themselves purely in complex form
+        audio_data,
+        sr=frame_rate,
+        bins_per_octave=48,  # bins_per_octave and n_bins both control resolution of image.
+        fmin=lbr.note_to_hz("A2"),  # sets the lower bound of collected notes
+        n_bins=288,  # for a whole number of octaves to be displayed, must be a multiple of bins_per_octave
     )  #  n_bins=480, bins_per_octave=96
-    return cqt_data
+    cqt_data = np.abs(
+        cqt_data_no_abs
+    )  # take the absolute value of all the frequenceies, taking the magnitudes of the complex numbers
+    return cqt_data_no_abs, cqt_data
 
 
 def plot_cqt_data(cqtd, sample_rate, label, ind):
@@ -147,45 +156,90 @@ if not os.path.exists("./pickled_data/data.pkl"):
         ]
         # Instantiates lists to group together CQT data from audio files under the same note
         _cqt_data_labels = []
-        _cqt_data_trimmed = []
+        _cqt_data_trimmed_mean = []
+        _cqt_data_trimmed_sum = []
         _cqt_data_full = []
+        _cqt_nabs_list = []
         # creates the file path directory for the respective note described by "label" in the cqt graphs dir
         label_fp = f"./cqt_graphs/{label}"  # fp - file path
         if not os.path.exists(label_fp):
             os.mkdir(label_fp)  # creates the dir if it does not already exist
         # Loop thru wav files as tuples of (index, file)
         for ind, wav in enumerate(wav_files):
-            wav_data, wdf, wr, sr = read_wav(
+            wdf, sr = read_wav(
                 wav
             )  # wav data, wav data in float, wave rate, sample rate respectively
             # using data obtained from reading wav file, run cqt and obtain their corresponding data
-            cqt_datum = cqt_func(wdf, sr)
+            SAMPLE_RATE_REF = sr
+            cqt_nabs, cqt_datum = cqt_func(
+                wdf, sr
+            )  # cqt_nabs represents the data of cqt_datum w/o absolute value method being applied
             plot_cqt_data(
                 cqt_datum, sr, label, ind + 1
             )  # plot the cqt data for the wav file under the note described by "label"
 
-            trimmed_data = trim_CQT(cqt_datum, top=TOP_N_FREQ)  # trim data
+            trimmed_data_mean, trimmed_data_sum, TRIMMED_EQUIVALENCE = trim_CQT(
+                cqt_datum, top=TOP_N_FREQ
+            )  # trim data
+
+            if TRIMMED_EQUIVALENCE == False or SWITCH == True:
+                SWITCH = True
+                TRIMMED_EQUIVALENCE = False
 
             # update columns
             _cqt_data_full.append(cqt_datum)
-            _cqt_data_trimmed.append(trimmed_data)
+            _cqt_data_trimmed_mean.append(trimmed_data_mean)
+            _cqt_data_trimmed_sum.append(trimmed_data_sum)
             _cqt_data_labels.append(label)
+            _cqt_nabs_list.append(cqt_nabs)
         # append data for cqt for the label to the overall lists representing all the cqt data repectively
-        new = pd.DataFrame(
+        new_mean = pd.DataFrame(
             {
                 "LABEL": _cqt_data_labels,
-                "CQT_DATA_TRIMMED": _cqt_data_trimmed,
+                "CQT_DATA_MEAN_TRIMMED": _cqt_data_trimmed_mean,
                 "CQT_DATA_FULL": _cqt_data_full,
             }
         )
-        cqt_data = pd.concat([cqt_data, new], ignore_index=True)
+        new_sum = pd.DataFrame(
+            {
+                "LABEL": _cqt_data_labels,
+                "CQT_DATA_SUM_TRIMMED": _cqt_data_trimmed_sum,
+            }
+        )
+        new_complex = pd.DataFrame(
+            {"LABEL": _cqt_data_labels, "CQT_DATA_COMPLEX": _cqt_nabs_list}
+        )
+        cqt_data = pd.concat([cqt_data, new_mean], ignore_index=True)
+        cqt_data_sum_sorted = pd.concat(
+            [cqt_data_sum_sorted, new_sum], ignore_index=True
+        )
+        cqt_data_complex = pd.concat([cqt_data_complex, new_complex], ignore_index=True)
     # upload data locally into pickled binary files to be loaded in for later use
     cqt_data.to_pickle("./pickled_data/data.pkl")
+    cqt_data_sum_sorted.to_pickle("./pickled_data/mag_sum_data.pkl")
+    # turn above specified data into csv files for readability of data
+    cqt_data.to_csv("./cqt_data_frame.csv", sep="\n", index=False)
+    cqt_data_complex.to_csv("./cqt_complex_data_frame.csv", sep="\n", index=False)
+    cqt_data_sum_sorted.to_csv("./cqt_data_sum_frame.csv", sep="\n", index=False)
 else:
     # read already created cqt data
     cqt_data = pd.read_pickle("./pickled_data/data.pkl")
+    cqt_data_sum_sorted = pd.read_pickle("./pickled_data/mag_sum_data.pkl")
+
+    for index, _ in enumerate(cqt_data):
+        single_equivalency = np.array_equal(
+            cqt_data.iloc[index]["CQT_DATA_MEAN_TRIMMED"],
+            cqt_data_sum_sorted.iloc[index]["CQT_DATA_SUM_TRIMMED"],
+        )
+        if not single_equivalency:
+            TRIMMED_EQUIVALENCE = False
+
     labels = cqt_data["LABEL"].unique()
+
+    cqt_data.to_csv("./cqt_data_frame.csv", sep="\n", index=False)
+    cqt_data_sum_sorted.to_csv("./cqt_data_sum_frame.csv", sep="\n", index=False)
 
 if __name__ == "__main__":
     # print the cqt head
     print(cqt_data.head())
+    print(f"Trimmed data is equivalent: {TRIMMED_EQUIVALENCE}")
