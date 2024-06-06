@@ -7,7 +7,7 @@ from train import GuitarEnv, train
 
 env = GuitarEnv()
 if not os.path.exists("dqn_guitar.zip"):
-    train(env, model_name="dqn_guitar")
+    train("dqn_guitar")
 model = DQN.load("dqn_guitar")
 
 file = input("Enter the path to the wav file: ")
