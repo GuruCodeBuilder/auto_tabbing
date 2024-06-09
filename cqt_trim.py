@@ -16,7 +16,9 @@ def trim_CQT(cqt_data, top: int = 20) -> np.ndarray:
                     Over time, the frequency moves through the magnitudes till the end
     """
     # Sort the data by the sum of the frequencies
-    _cqt_data_first_freqs = np.array([i[:30] for i in cqt_data])  # shape = (288, 30)
+    _cqt_data_first_freqs = np.array(
+        [i[(10 + len(i) // 2) - 14 : 10 + (len(i) // 2) + 16] for i in cqt_data]
+    )  # shape = (288, 30)
     cqt_data_initial_mags = np.ndarray(shape=(288, 15), buffer=_cqt_data_first_freqs)
 
     # The mean and sum of the first 30 bins respectively

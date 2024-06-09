@@ -1,6 +1,9 @@
 *.jpg
 *.pkl
+*.csv
 /venv
+/env
+/csv_files
 /pickled_data
 /cqt_graphs
 /__pycache__

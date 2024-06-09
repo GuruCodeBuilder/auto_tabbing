@@ -135,6 +135,9 @@ def split_training_valid(
 if not os.path.exists("./cqt_graphs"):
     os.mkdir("./cqt_graphs")
 
+if not os.path.exists("./csv_files"):
+    os.mkdir("./csv_files")
+
 # checks if the pickled data file has been created or not and considers the case it not created
 if not os.path.exists("./pickled_data/data.pkl"):
     if not os.path.exists("./pickled_data"):
