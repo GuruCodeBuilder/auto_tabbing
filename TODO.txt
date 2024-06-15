@@ -1,0 +1,7 @@
+List of TODOs:
+
+- TODO: clean up main.py's code for the AUTO functionality
+- TODO: create a seperate module containing all data structures or variables used in multiple ther modules
+- TODO: create more consistency (like reusing the "labels" list instead of using "labels" and "notes")
+- TODO: create documentation for train.py
+- TODO: work on documentation thru out

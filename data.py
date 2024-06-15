@@ -91,12 +91,17 @@ def split_training_valid(
 ):
     """Splits the data into training and validation data.
 
-    Args:
-        data (pd.DataFrame): The data to split.
-        training_size (float | None | int, optional): If this number is an int, we take that much training data for each label. The rest goes to validation. If this is a float, then allocate that percent of each label for training data and rest for validation. If the value is None, then use the smallest label value as training_size. rest goes to validation. Defaults to None.
-        verbose (bool, optional): If True, print out useful stuff. Defaults to False.
-    Returns:
-        pd.DataFrame, pd.DataFrame: The training and validation data respectively.
+    PARAMS
+    ------
+        - `data` (pd.DataFrame): The data to split.
+        - `training_size` (float | None | int, optional):
+            - If this number is an int, we take that much training data for each label. The rest goes to validation.
+            - If this is a float, then allocate that percent of each label for training data and rest for validation. If the value is None, then use the smallest label value as training_size. rest goes to validation. Defaults to None.
+        - `verbose` (bool, optional): If True, print out useful stuff. Defaults to False.
+
+    RETURNS
+    -------
+        (`training_data`, `validation_data`): pd.DataFrame, pd.DataFrame: The training and validation data respectively.
     """
     training_data_list = []
     validation_data_list = []

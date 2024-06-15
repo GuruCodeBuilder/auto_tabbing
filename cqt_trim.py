@@ -2,18 +2,19 @@ import numpy as np
 
 
 def trim_CQT(cqt_data, top: int = 20) -> np.ndarray:
-    """Trims CQT data to the top `top` frequencies.
+    """Trims CQT data to the `top` frequencies.
 
-    Args:
-        cqt_data (np.ndarray): CQT data to trim.
-        top (int, optional): Number of frequencies to use. Defaults to 5.
+    PARAMS:
+    ------
+        - cqt_data (np.ndarray): CQT data to trim.
+        - top (int, optional): Number of frequencies to use. Defaults to 5.
 
-    Returns:
-        np.ndarray: Trimmed CQT data in format [freq1, fre2, ..., freq5] where the freq is represented as its list of magnitude over time
-                    Example: the frequence represnted by f = [a, b, c, d] has 4 time bins, and a, b, c, and d are complex numbers
-                    np.abs(f) represents the same frequency but with the magnitudes of those complex numbers
-                    now: f = [||a||, ||b||, ||c||, ||d||], a list of real numbers.
-                    Over time, the frequency moves through the magnitudes till the end
+    RETURNS
+    -------
+    - trimmed data (`np.ndarray`) :
+            - Trimmed CQT data in format `[freq1, fre2, ..., freq5]` where the freq is represented as its list of magnitude over time
+            - Example: the frequence represnted by `f = [a, b, c, d]` has 4 time bins, and `a`, `b`, `c`, and `d` are complex numbers `np.abs(f)` represents the same frequency but with the magnitudes of those complex numbers.
+              Now, `f = [||a||, ||b||, ||c||, ||d||]`, a list of real numbers. Over time, the frequency moves through the magnitudes till the end
     """
     # Sort the data by the sum of the frequencies
     _cqt_data_first_freqs = np.array(
