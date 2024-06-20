@@ -78,5 +78,14 @@ def train(name):
     model.save(name)
 
 
+def validate(model, vaidation_data):
+    """Validates the model on the validation data and returns the accuracy and the amount of time it took to return a response.
+
+    Args:
+        model (_type_): _description_
+        vaidation_data (_type_): _description_
+    """
+
+
 if __name__ == "__main__":
     train("dqn_guitar")

@@ -4,25 +4,7 @@ from tqdm import tqdm
 from stable_baselines3 import DQN
 
 from data import labels, read_wav, cqt_func, trim_CQT, TOP_N_FREQ
-from train import GuitarEnv, train
-
-# list of different notes (consiting of all the notes used in the audio files)
-note_reference = [
-    "A",
-    "Asharp",
-    "B",
-    "Bsharp",
-    "C",
-    "Csharp",
-    "D",
-    "Dsharp",
-    "E",
-    "Esharp",
-    "F",
-    "Fsharp",
-    "G",
-    "Gsharp",
-]
+from train import GuitarEnv, train, labels
 
 
 # defining the main function
@@ -121,8 +103,8 @@ def main(setting: str = "MANUAL", *args, **kwargs):
             predictions_plain.append(note_predicted)
             try:
                 # get the indexes of note_original and predicted_note in reference to the list "notes"
-                note_index = note_reference.index(note_original)
-                predicted_index = note_reference.index(note_predicted)
+                note_index = labels.index(note_original)
+                predicted_index = labels.index(note_predicted)
                 # append the indexes to the respective lists of indexes for al lthe audio files
                 note_ref_indexes.append(note_index)
                 predicted_ref_indexes.append(predicted_index)
@@ -131,12 +113,12 @@ def main(setting: str = "MANUAL", *args, **kwargs):
                 far_val = 0  # this also allows an easy way to add up totals for near and/or far
 
                 if (  # if the predicted index is 1 unit away form the correct index, set the "near" var to 1
-                    (note_index - 1) % len(note_reference)
+                    (note_index - 1) % len(labels)
                 ) == predicted_index or note_index + 1 == predicted_index:
                     near_val = 1
                 # The following accounts for the "octave problem"
                 # (e.g. when ignoring octaves, Gsharp is essentially one index away from A)
-                elif note_index + 1 == len(note_reference) and predicted_index == 0:
+                elif note_index + 1 == len(labels) and predicted_index == 0:
                     near_val = 1
 
                 # if near and match aren't true
@@ -147,7 +129,7 @@ def main(setting: str = "MANUAL", *args, **kwargs):
                     # The following accounts for the octave problem refered to earlier
                     elif (
                         note_index - 3
-                        <= predicted_index - len(note_reference)
+                        <= predicted_index - len(labels)
                         <= note_index + 3
                     ):
                         far_val = 1
