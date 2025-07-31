@@ -121,14 +121,20 @@ def split_training_valid(
     else:
         _print(f"Training size is an int: {training_size}")
 
+    # TODO Fix the fractional sampling method such that for each label,
+    # a given % is moved to the training data set and the % of data described by (1 - given float) is moved to val_data
+
     # Split the data into training and validation data based on the training_size
     for label in tqdm(data["LABEL"].unique(), desc="Splitting data"):
         label_data = data[data["LABEL"] == label]
         if isinstance(training_size, float):
-            training_data_list.append(label_data.sample(frac=training_size))
+            label_training = label_data.sample(frac=training_size)
+            label_validation = label_data.drop(label_training.index)
+            training_data_list.append(label_training)
+            validation_data_list.append(label_validation)
         else:
             training_data_list.append(label_data[:training_size])
-        validation_data_list.append(label_data[training_size:])
+            validation_data_list.append(label_data[training_size:])
 
     training_data = pd.concat(training_data_list)
     validation_data = pd.concat(validation_data_list)

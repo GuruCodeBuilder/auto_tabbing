@@ -7,7 +7,7 @@ def trim_CQT(cqt_data, top: int = 20) -> np.ndarray:
     PARAMS:
     ------
         - cqt_data (np.ndarray): CQT data to trim.
-        - top (int, optional): Number of frequencies to use. Defaults to 5.
+        - top (int, optional): Number of frequencies to use. Defaults to 20.
 
     RETURNS
     -------
@@ -38,4 +38,4 @@ def trim_CQT(cqt_data, top: int = 20) -> np.ndarray:
 
     same = np.array_equal(*trimmed_arrays)
 
-    return trimmed_arrays[0], trimmed_arrays[1], same
+    return cqt_data, trimmed_arrays[1], same

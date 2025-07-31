@@ -6,7 +6,7 @@ from stable_baselines3.dqn import MlpPolicy
 
 from data import cqt_data, split_training_valid, labels, SAMPLE_RATE_REF
 
-training_data, validation_data = split_training_valid(cqt_data)
+training_data, validation_data = split_training_valid(cqt_data, training_size=0.8)
 
 SAMPLING_RATE = SAMPLE_RATE_REF
 IS_USING_FULL_CQT = False

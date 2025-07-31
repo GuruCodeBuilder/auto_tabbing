@@ -4,11 +4,28 @@ from tqdm import tqdm
 from stable_baselines3 import DQN
 
 from data import labels, read_wav, cqt_func, trim_CQT, TOP_N_FREQ
-from train import GuitarEnv, train, labels
+from train import GuitarEnv, train, labels, validation_data
+
+note_reference = [
+    "A",
+    "Asharp",
+    "B",
+    "Bsharp",
+    "C",
+    "Csharp",
+    "D",
+    "Dsharp",
+    "E",
+    "Esharp",
+    "F",
+    "Fsharp",
+    "G",
+    "Gsharp",
+]
 
 
 # defining the main function
-def main(setting: str = "MANUAL", *args, **kwargs):
+def main(setting: str = "MANUAL", ml_alg_name: str = "dqn_guitar", *args, **kwargs):
     """
     The main() function contains the functionality of the program, returning or outputing the predictions
     based off the ml algorithm model, which uses data from the data.py module, trims it with the cqt_trim.py
@@ -37,10 +54,11 @@ def main(setting: str = "MANUAL", *args, **kwargs):
     >>> # switched mode to AUTO and passes in required data into kwargs
     >>> main("AUTO", wav_files=wav_files, notes=notes)
     """
+
     env = GuitarEnv()
-    if not os.path.exists("dqn_guitar.zip"):
-        train("dqn_guitar")
-    model = DQN.load("dqn_guitar")
+    if not os.path.exists(ml_alg_name + ".zip"):
+        train(ml_alg_name)
+    model = DQN.load(ml_alg_name)
 
     predicted_list = []
     matches = []
@@ -103,8 +121,8 @@ def main(setting: str = "MANUAL", *args, **kwargs):
             predictions_plain.append(note_predicted)
             try:
                 # get the indexes of note_original and predicted_note in reference to the list "notes"
-                note_index = labels.index(note_original)
-                predicted_index = labels.index(note_predicted)
+                note_index = note_reference.index(note_original)
+                predicted_index = note_reference.index(note_predicted)
                 # append the indexes to the respective lists of indexes for al lthe audio files
                 note_ref_indexes.append(note_index)
                 predicted_ref_indexes.append(predicted_index)
@@ -113,12 +131,12 @@ def main(setting: str = "MANUAL", *args, **kwargs):
                 far_val = 0  # this also allows an easy way to add up totals for near and/or far
 
                 if (  # if the predicted index is 1 unit away form the correct index, set the "near" var to 1
-                    (note_index - 1) % len(labels)
+                    (note_index - 1) % len(note_reference)
                 ) == predicted_index or note_index + 1 == predicted_index:
                     near_val = 1
                 # The following accounts for the "octave problem"
                 # (e.g. when ignoring octaves, Gsharp is essentially one index away from A)
-                elif note_index + 1 == len(labels) and predicted_index == 0:
+                elif note_index + 1 == len(note_reference) and predicted_index == 0:
                     near_val = 1
 
                 # if near and match aren't true
@@ -129,7 +147,7 @@ def main(setting: str = "MANUAL", *args, **kwargs):
                     # The following accounts for the octave problem refered to earlier
                     elif (
                         note_index - 3
-                        <= predicted_index - len(labels)
+                        <= predicted_index - len(note_reference)
                         <= note_index + 3
                     ):
                         far_val = 1
