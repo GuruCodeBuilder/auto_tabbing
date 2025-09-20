@@ -11,7 +11,7 @@ from cqt_trim import trim_CQT
 
 # constants for quick config
 GRAPH = False  # set to True to generate the CQT graphs
-TOP_N_FREQ = 20  # number of top frequencies to be returned by the trim_CQT function
+TOP_N_FREQ = 100  # number of top frequencies to be returned by the trim_CQT function (initially 20)
 TRIMMED_EQUIVALENCE = True
 SWITCH = False
 
@@ -30,7 +30,7 @@ cqt_data_sum_sorted = (
 
 
 def read_wav(file):
-    """Read data from the audio files individually, obtaining information on the dat itself and frame/sample rate"""
+    """Read data from the audio files individually, obtaining information on the data itself and frame/sample rate"""
     with wave.open(file, "r") as f:
         audio_data_float, sample_rate = lbr.load(file)
     return audio_data_float, sample_rate

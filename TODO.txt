@@ -3,8 +3,12 @@ List of TODOs:
 - TODO: clean up main.py's code for the AUTO functionality
 - TODO: create a seperate module containing all data structures or variables used in multiple ther modules
 - TODO: create more consistency (like reusing the "labels" list instead of using "labels" and "notes")
+    - Might not really be necessary
 - TODO: create documentation for train.py
 - TODO: work on documentation thru out
-- TODO: work on cqt_trim.py and identifying the best settings (if any are even needed)
+- TODO: work on cqt_trim.py and identifying the best settings
+    - find an existing underlying algorithm to COMPARE numerically different CQTs/Transforms
 - TODO: work on identifying improvements in the ml algorithm
 - work on the so called "validation" function in training.py and incorporate it into the main function
+    - add change to "notes" list to match val data instead of all the data
+    - Mostly Done

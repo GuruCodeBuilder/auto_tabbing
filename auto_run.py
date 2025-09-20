@@ -6,6 +6,16 @@ import os
 wav_files = []  # list of relative paths to wav files
 notes = []  # concurrent list of notes that corresponds to the previous lsit made
 
+validation_data: pd.DataFrame = pd.read_pickle("./pickled_data/validation_data.pkl")
+
+# val_labels = validation_data["LABEL"].unique()
+
+val_notes = []
+for index, _ in enumerate(validation_data["LABEL"]):
+    val_datum_label = validation_data.iloc[index]["LABEL"]
+    val_notes.append(val_datum_label)
+# print(val_notes)
+
 # fill the lists with data from the wav files in the ./data folder
 for i in os.scandir("./data"):
     if i.is_dir():
@@ -24,6 +34,9 @@ def auto_gen():
     """Repeatedly calls the main() function from the main module on validation files to test the ml algorithm's accuracy"""
     # case representing if ml prediction pickled data has not been created or does not exist
     if not os.path.exists("./pickled_data/ml_prediction_df.pkl"):
+        print(f"Loading TOTAL cqt data\n")
+        # how much of the cqt data was use: in this case, all of it, including training data which ISN'T ideal
+        cqt_data_category = "ALL DATA"
         # unpack a tuple return from the main() function from the `main` module
         (
             predictions,
@@ -35,7 +48,10 @@ def auto_gen():
             note_plain,
             predicted_plain,
         ) = main(
-            setting="AUTO", wav_files=wav_files, notes=notes
+            setting="AUTO",
+            wav_files=wav_files,
+            notes=notes,
+            val_data=None,
         )  # pass in the setting name, list of relative wav file paths, and corresponding notes
 
         # make a data frame consisting of all important data
@@ -61,28 +77,94 @@ def auto_gen():
         # extract the prediction data frame and input it into a csv file labeled "model_output.csv" in the "./csv_files" folder
         prediction_frame.to_csv("./csv_files/model_output.csv", sep="\t", index=False)
 
+        notes_used = notes
+
+    elif not os.path.exists("./pickled_data/ml_val_prediction_df.pkl"):
+        print(f"Loading VALIDATION cqt data\n")
+        cqt_data_category = "VALIDATION DATA"
+        # unpack a tuple return from the main() function from the `main` module WITH validation data
+        (
+            predictions,
+            matches,
+            near,
+            far,
+            note_ref_indexes,
+            predicted_ref_indexes,
+            note_plain,
+            predicted_plain,
+        ) = main(
+            setting="AUTO",
+            wav_files=wav_files,
+            notes=notes,
+            val_data=validation_data,
+        )
+
+        prediction_frame = pd.DataFrame(
+            {
+                "ORIGINAL_NOTE": val_notes,
+                "PREDICTED_NOTE": predictions,
+                "MATCH": matches,
+                "NEAR": near,
+                "FAR": far,
+                "PLAIN": note_plain,
+                "PREDICTED_PLAIN": predicted_plain,
+                "PLAIN_REF_INDEXES": note_ref_indexes,
+                "PREDICTED_PLAIN_REF_INDEXES": predicted_ref_indexes,
+            }
+        )
+
+        # pickle the data frame for the predictions made by the current instance of the ml model
+        prediction_frame.to_pickle("./pickled_data/ml_val_prediction_df.pkl")
+        # extract the prediction data frame and input it into a csv file labeled "model_output.csv" in the "./csv_files" folder
+        prediction_frame.to_csv(
+            "./csv_files/model_val_output.csv", sep="\t", index=False
+        )
+
+        notes_used = val_notes
+
     else:
-        # the prediction data frame has already been created, so load the data
-        prediction_frame = pd.read_pickle(
-            "./pickled_data/ml_prediction_df.pkl"
-        )  # load the pickled data
+        user_choice_data = input(
+            "Which data do you want to use? (1) ALL DATA or (2) VALIDATION DATA. Input number corresponding to your choice: "
+        )
+        if user_choice_data != "1" and user_choice_data != "2":
+            print("Input not understood. Defaulting to VALIDATION DATA")
+            cqt_data_category = "2"
+        if user_choice_data == "1":
+            cqt_data_category = "ALL DATA"
+            # the prediction data frame has already been created, so load the data
+            prediction_frame = pd.read_pickle(
+                "./pickled_data/ml_prediction_df.pkl"
+            )  # load the pickled data
+            notes_used = notes
+        elif user_choice_data == "2":
+            cqt_data_category = "VALIDATION DATA"
+            # the validation prediction data frame has already been created, so load the data
+            prediction_frame = pd.read_pickle(
+                "./pickled_data/ml_val_prediction_df.pkl"
+            )  # load the pickled data
+            notes_used = val_notes
+        print()
+
         # extract different columns fro mthe data frame
         matches = prediction_frame["MATCH"]
         near = prediction_frame["NEAR"]
         far = prediction_frame["FAR"]
 
     # compile the data and print them out in a concise manner + summarizing results
+    print(f"{cqt_data_category} was used")
     print(f"Total number of matches: {sum(matches)}")
     print(f"Total number of near predicitons: {sum(near)}")
     print(f"Total number of far predicitons (not ideal): {sum(far)}")
     print(
-        f"Total number of misses (note exact, near, or far results): {len(notes) - sum(far) - sum(near) - sum(matches)}"
+        f"Total number of misses (note exact, near, or far results): {len(notes_used) - sum(far) - sum(near) - sum(matches)}"
     )
     print(f"Total number of valid results (matches + near): {sum(near) + sum(matches)}")
     print(
         f"Total number of exact or close results (matches + near + far): {sum(near) + sum(matches) + sum(far)}"
     )
-    print(f"Success (Match) Rate: {int((sum(matches) / len(notes)) * 10000) * 0.01}%")
+    print(
+        f"Success (Match) Rate: {int((sum(matches) / len(notes_used)) * 10000) * 0.01}%"
+    )
 
     # TODO: compile statistical variables for the data (i.e. mean, standard dev, etc)
 
