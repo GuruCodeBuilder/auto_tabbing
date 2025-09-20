@@ -8,3 +8,4 @@
 /cqt_graphs
 /__pycache__
 /dqn_guitar.zip
+guitar_cnn_model.pth
