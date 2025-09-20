@@ -1,11 +1,11 @@
 import os
 from tqdm import tqdm
 
-from stable_baselines3 import DQN
-
+import torch
+import numpy as np
 import pandas as pd
 from data import labels, read_wav, cqt_func, trim_CQT, TOP_N_FREQ
-from train import GuitarEnv, train, labels, validation_data
+from train import GuitarCNN, train
 
 note_reference = [
     "A",
@@ -23,6 +23,52 @@ note_reference = [
     "G",
     "Gsharp",
 ]
+
+
+def load_cnn_model(model_path="guitar_cnn_model.pth"):
+    """Load the trained CNN model"""
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    # Load training data to get the correct input shape
+    try:
+        training_data = pd.read_pickle("./pickled_data/training_data.pkl")
+        # Get the shape from actual training data
+        sample_cqt_data = training_data.iloc[0]["CQT_DATA_MEAN_TRIMMED"]
+        dummy_tensor = torch.FloatTensor(sample_cqt_data).unsqueeze(
+            0
+        )  # Add channel dim
+        input_shape = dummy_tensor.shape  # (1, height, width)
+    except Exception as e:
+        print(f"Warning: Could not load training data, using default shape: {e}")
+        # Fallback to default shape
+        dummy_cqt_data = np.zeros((84, 87))  # Standard CQT trimmed shape
+        dummy_tensor = torch.FloatTensor(dummy_cqt_data).unsqueeze(0)  # Add channel dim
+        input_shape = dummy_tensor.shape  # (1, height, width)
+
+    num_classes = len(labels)
+
+    # Initialize model
+    model = GuitarCNN(input_shape, num_classes)
+    model.load_state_dict(torch.load(model_path, map_location=device))
+    model.to(device)
+    model.eval()
+
+    return model, device
+
+
+def predict_with_cnn(model, cqt_data, device):
+    """Make a prediction using the CNN model"""
+    # Convert to tensor and add channel dimension
+    input_tensor = (
+        torch.FloatTensor(cqt_data).unsqueeze(0).unsqueeze(0)
+    )  # Add batch and channel dims
+    input_tensor = input_tensor.to(device)
+
+    with torch.no_grad():
+        output = model(input_tensor)
+        predicted_class = torch.argmax(output, dim=1).item()
+
+    return predicted_class
 
 
 # defining the main function
@@ -58,10 +104,13 @@ def main(
     >>> main("AUTO", wav_files=wav_files, notes=notes)
     """
 
-    env = GuitarEnv()
-    if not os.path.exists(ml_alg_name + ".zip"):
-        train(ml_alg_name)
-    model = DQN.load(ml_alg_name)
+    # Load the CNN model
+    model_path = (
+        ml_alg_name + ".pth" if ml_alg_name != "dqn_guitar" else "guitar_cnn_model.pth"
+    )
+    if not os.path.exists(model_path):
+        train(ml_alg_name.replace("dqn_guitar", "guitar_cnn_model"))
+    model, device = load_cnn_model(model_path)
 
     predicted_list = []
     matches = []
@@ -84,7 +133,7 @@ def main(
                 cqt_nabs, cqt_datum = cqt_func(*read_wav(file))
                 trimmed_data_mean, _, _ = trim_CQT(cqt_datum, top=TOP_N_FREQ)
                 print(trimmed_data_mean.shape)
-                action, _ = model.predict(trimmed_data_mean)
+                action = predict_with_cnn(model, trimmed_data_mean, device)
                 print(f"Predicted label: {labels[action]}")
                 predicted_list.append(labels[action])
             file = input("Enter the relative path to the wav file: ")
@@ -109,7 +158,7 @@ def main(
                 val_trimmed_data_mean = validation_data.iloc[index][
                     "CQT_DATA_MEAN_TRIMMED"
                 ]
-                action, _ = model.predict(val_trimmed_data_mean)
+                action = predict_with_cnn(model, val_trimmed_data_mean, device)
                 prediction = labels[action]
                 predicted_list.append(prediction)
                 match_val = 1 if str(prediction) == val_datum_label else 0
@@ -136,8 +185,8 @@ def main(
                 trimmed_data_mean, _, _ = trim_CQT(
                     cqt_datum, top=TOP_N_FREQ
                 )  # trim the data before calling the ml_algirhtm for a prediction
-                action, _ = model.predict(
-                    trimmed_data_mean
+                action = predict_with_cnn(
+                    model, trimmed_data_mean, device
                 )  # obtain the action/prediction for the index of the label
                 # obtain the predicted label and append it to the precitions list
                 prediction = labels[action]
@@ -199,9 +248,13 @@ def note_calculations(
         near_val = 0  # 0 represents False, 1 represents True
         far_val = 0  # this also allows an easy way to add up totals for near and/or far
 
-        if (  # if the predicted index is 1 unit away form the correct index, set the "near" var to 1
-            (note_index - 1) % len(note_reference)
-        ) == predicted_index or note_index + 1 == predicted_index:
+        if (
+            (  # if the predicted index is 1 unit away form the correct index, set the "near" var to 1
+                (note_index - 1) % len(note_reference)
+            )
+            == predicted_index
+            or note_index + 1 == predicted_index
+        ):
             near_val = 1
         # The following accounts for the "octave problem"
         # (e.g. when ignoring octaves, Gsharp is essentially one index away from A)
