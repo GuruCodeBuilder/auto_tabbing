@@ -8,4 +8,5 @@
 /cqt_graphs
 /__pycache__
 /dqn_guitar.zip
+/comparison_results
 guitar_cnn_model.pth
