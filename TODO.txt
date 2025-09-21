@@ -1,14 +1,52 @@
 List of TODOs:
 
+
+low priority:
 - TODO: clean up main.py's code for the AUTO functionality
+
 - TODO: create a seperate module containing all data structures or variables used in multiple ther modules
+
 - TODO: create more consistency (like reusing the "labels" list instead of using "labels" and "notes")
-    - Might not really be necessary
+    - might not really be necessary
+
+
+medium priority:
+
 - TODO: create documentation for train.py
+
 - TODO: work on documentation thru out
-- TODO: work on cqt_trim.py and identifying the best settings
-    - find an existing underlying algorithm to COMPARE numerically different CQTs/Transforms
+
+
+high priority:
+
 - TODO: work on identifying improvements in the ml algorithm
+    - mostly if not completely done
+
+- TODO: start *chord* implementation
+    - *find* of *create* new data
+    - configure new functionality for chords with the CNN model
+
+- TODO: after chord implementation, start *time-series* implementation
+    - identification of multiple notes or chords in succession in one .wav file
+    - decide if notes and chords will be differentiated or analyzed as one
+    - if possible, try to keep note of rythm along with pitches and chords for tab/sheet implementation
+
+- TODO: after time-series implementation, start *tablature/sheet-music* implementation
+    - make the tab-algorithm to go from time-series to tab representation
+    - if tablature, rather easy and mostly ignores rythm, emphasis on pitches and chords and the tablature
+    - if sheet, more complicated as includes rythm and time signatures
+    - figure out gui in tandem with web dev/web gui design
+
+- TODO: cocurrently with tablature implementation, start web-dev with React or Vue
+    - figure out gui for tablature with web dev consdieration in mind
+    - go from tab-algorithm product (for the tablature or sheet music in time) to (interactive?) web gui
+
+
+completed:
+
+- TODO: work on identifying improvements in the ml algorithm
+    - mostly if not completely done
+
 - work on the so called "validation" function in training.py and incorporate it into the main function
     - add change to "notes" list to match val data instead of all the data
-    - Mostly Done
+    - DONE
